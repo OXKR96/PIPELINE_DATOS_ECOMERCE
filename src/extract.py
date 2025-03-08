@@ -1,7 +1,7 @@
 from typing import Dict
 
 import requests
-from pandas import DataFrame, read_csv, read_json, to_datetime
+from pandas import DataFrame, read_csv, to_datetime
 
 def temp() -> DataFrame:
     """Get the temperature data.
@@ -20,15 +20,34 @@ def get_public_holidays(public_holidays_url: str, year: str) -> DataFrame:
     Returns:
         DataFrame: A dataframe with the public holidays.
     """
-    # TODO: Implementa esta función.
-    # Debes usar la biblioteca requests para obtener los días festivos públicos del año dado.
-    # La URL es public_holidays_url/{year}/BR.
-    # Debes eliminar las columnas "types" y "counties" del DataFrame.
-    # Debes convertir la columna "date" a datetime.
-    # Debes lanzar SystemExit si la solicitud falla. Investiga el método raise_for_status
-    # de la biblioteca requests.
-
-    raise NotImplementedError
+    # Construir la URL completa para los días festivos de Brasil
+    full_url = f"{public_holidays_url}/{year}/BR"
+    
+    try:
+        # Usar la biblioteca requests para obtener los días festivos públicos del año dado
+        response = requests.get(full_url)
+        
+        # Usar raise_for_status() para manejar errores de solicitud
+        response.raise_for_status()
+        
+        # Convertir la respuesta a DataFrame
+        holidays_data = response.json()
+        holidays_df = DataFrame(holidays_data)
+        
+        # Eliminar las columnas "types" y "counties"
+        columns_to_drop = ['types', 'counties']
+        for col in columns_to_drop:
+            if col in holidays_df.columns:
+                holidays_df = holidays_df.drop(columns=[col])
+        
+        # Convertir la columna "date" a datetime
+        holidays_df['date'] = to_datetime(holidays_df['date'])
+        
+        return holidays_df
+    
+    except requests.RequestException as e:
+        # Lanzar SystemExit si la solicitud falla
+        raise SystemExit(f"Error al obtener días festivos: {e}")
 
 
 def extract(
